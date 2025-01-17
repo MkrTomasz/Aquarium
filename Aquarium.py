@@ -18,6 +18,11 @@ FISH_TYPES = [
     {'right': ['>_==>'],            'left': ['<==_<']},
     {'right': [r'>\\>'],            'left': ['<//<']},
     {'right': ['><)))*>'],          'left': ['<*(((><']},
+    {'right': ['}-[[[*>'],          'left': ['<*]]]-{']},
+    {'right': [']-<)))b>'],         'left': ['d(((>-[']},
+    {'right': ['><XXX*>'],          'left': ['<*XXX><']},
+    {'right': ['_.-._.-^=>', '.-._.-.^=>', '-._.-._^=>', '._.-._.^=>'],          
+    'left': ['<=^-._.-._', '<=^.-_.-.', '<=^_.-._.-', '<=^._.-._.']},
 ]
 
 LONGEST_FISH_LENGTH = 10
@@ -99,7 +104,7 @@ def generateFish():
 
 def simulateAquarium():
 
-    global FISHES, BUBBLERS, BUBBLES, KELP, STEP
+    global FISHES, BUBBLERS, BUBBLES, KELPS, STEP
 
     for fish in FISHES:
         if STEP % fish['hSpeed'] == 0:
@@ -115,4 +120,53 @@ def simulateAquarium():
                 else:
                     fish['goingRight'] = True
                     fish['colors'].reverse()
-                    
+
+        fish['timeToHDirChange'] -= 1
+        if fish['timeToHDirChange'] == 0:
+            fish['timeToHDirChange'] = random.randint(10, 60)
+            fish['goingRight'] = not fish['goingRight']
+
+        if STEP % fish['vSpeed'] == 0:
+            if fish['goingDown']:
+                if fish['y'] != BOTTOM_EDGE:
+                    fish['y'] += 1
+                else:
+                    fish['goingDown'] == False
+            else:
+                if fish['y'] != TOP_EDGE:
+                    fish['y'] -= 1
+                else:
+                    fish['goingDown'] == True
+
+        fish['timeToVDirChange'] -= 1
+        if fish['timeToVDirChange'] == 0:
+            fish['timeToVDirChange'] = random.randint(2, 20)
+            fish['goingDown'] = not fish['goingDown']
+
+    for bubbler in BUBBLERS:
+        if random.randint(1, 5) == 1:
+            BUBBLES.append({'x': bubbler, 'y': HEIGHT - 2})
+
+    for bubble in BUBBLES:
+        diceRoll = random.randint(1, 6)
+        if (diceRoll == 1) and (bubble['x'] != LEFT_EDGE):
+            bubble['x'] -= 1
+        elif (diceRoll == 2) and (bubble['x'] != RIGHT_EDGE):
+            bubble['x'] += 1
+
+        bubble['y'] -= 1
+
+    for i in range(len(BUBBLES) -1, -1, -1):
+        if BUBBLES[i]['y'] == TOP_EDGE:
+            del BUBBLES[i]
+
+    for kelp in KELPS:
+        for i, kelpSegment in enumerate(kelp['segments']):
+            if random.randint(1, 20) == 1:
+                if kelpSegment == '(':
+                    kelp['segments'][i] = ')'
+                elif kelpSegment == ')':
+                    kelp['segments'][i] = '('
+
+
+def drawAquarium():
