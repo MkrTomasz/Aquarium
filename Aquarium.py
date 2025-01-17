@@ -192,7 +192,7 @@ def drawAquarium():
             bext.fg(fish['colors'][i])
             print(fishPart, end='')
 
-    bext.fg['green']
+    bext.fg('green')
     for kelp in KELPS:
         for i, kelpSegment in enumerate(kelp['segments']):
             if kelpSegment == '(':
@@ -208,3 +208,27 @@ def drawAquarium():
     sys.stdout.flush()
 
 
+def clearAquarium():
+    global FISHES, BUBBLERS, BUBBLES, KELPS
+
+    for bubble in BUBBLES:
+        bext.goto(bubble['x'], bubble['y'])
+        print(' ', end='')
+
+    for fish in FISHES:
+        bext.goto(fish['x'], fish['y'])
+        print(' ' * len(fish['left'][0]), end='')
+
+    for kelp in KELPS:
+        for i, kelpSegment in enumerate(kelp['segments']):
+            bext.goto(kelp['x'], HEIGHT - 2 - i)
+            print('  ', end='')
+
+    sys.stdout.flush()
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit()
