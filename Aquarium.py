@@ -170,3 +170,41 @@ def simulateAquarium():
 
 
 def drawAquarium():
+    global FISHES, BUBBLERS, BUBBLES, KELPS, STEP
+
+    bext.fg('white')
+    bext.goto(0, 0)
+    print('Aquarium         Ctrl+C: leave', end='')
+
+    bext.fg('white')
+    for bubble in BUBBLES:
+        bext.goto(bubble['x'], bubble['y'])
+        print(random.choice(('o', '0')), end='')
+
+    for fish in FISHES:
+        bext.goto(fish['x'], fish['y'])
+        if fish['goingRight']:
+            fishText = fish['right'][STEP % len(fish['right'])]
+        else:
+            fishText = fish['left'][STEP % len(fish['left'])]
+
+        for i, fishPart in enumerate(fishText):
+            bext.fg(fish['colors'][i])
+            print(fishPart, end='')
+
+    bext.fg['green']
+    for kelp in KELPS:
+        for i, kelpSegment in enumerate(kelp['segments']):
+            if kelpSegment == '(':
+                bext.goto(kelp['x'], BOTTOM_EDGE -1)
+            elif kelpSegment == ')':
+                bext.goto(kelp['x'] +1, BOTTOM_EDGE -1)
+            print(kelpSegment, end='')
+
+    bext.fg('yellow')
+    bext.goto(0, HEIGHT -1)
+    print(chr(9617) * (WIDTH - 1), end='')
+
+    sys.stdout.flush()
+
+
