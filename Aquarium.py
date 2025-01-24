@@ -27,6 +27,7 @@ FISH_TYPES = [
 
 LONGEST_FISH_LENGTH = 10
 
+#x and y positions where the fish is reaching edge of the screen
 LEFT_EDGE = 0
 RIGHT_EDGE = WIDTH - 1 - LONGEST_FISH_LENGTH
 TOP_EDGE = 0
@@ -34,7 +35,6 @@ BOTTOM_EDGE = HEIGHT - 2
 
 
 def main():
-
     global FISHES, BUBBLERS, BUBBLES, KELPS, STEP
 
     bext.bg('black')
@@ -44,8 +44,10 @@ def main():
     for i in range(NUM_FISH):
         FISHES.append(generateFish())
 
+    #NOTE: bubbles will be drawn but bubblers not
     BUBBLERS = []
     for i in range(NUM_BUBBLERS):
+        #every bubbler will be generated at a random location
         BUBBLERS.append(random.randint(LEFT_EDGE, RIGHT_EDGE))
     BUBBLES = []
 
@@ -57,6 +59,7 @@ def main():
             kelp['segments'].append(random.choice(['(', ')']))
         KELPS.append(kelp)
 
+    #Run the simulation
     STEP = 1
     while True:
         simulateAquarium()
@@ -67,11 +70,14 @@ def main():
 
 
 def getRandomColor():
-    return random.choice(('black', 'red', 'green', 'yellow', 'blue', 'purple', 'cyan', 'white'))
+    return random.choice(('red', 'green', 'yellow', 'blue', 'purple', 'cyan', 'white'))
 
 
 def generateFish():
+    '''Returns a dict that represents a fish'''
     fishType = random.choice(FISH_TYPES)
+
+    #Setup a color for each fish part
     colorPattern = random.choice(('random', 'head-tail', 'single'))
     fishLength = len(fishType['right'][0])
     if colorPattern == 'random':
@@ -85,6 +91,7 @@ def generateFish():
         colors[0] = headTailColor
         colors[-1] = headTailColor
 
+    #Setup fish parameters
     fish = {'right': fishType['right'],
             'left': fishType['left'],
             'colors': colors,
@@ -103,10 +110,12 @@ def generateFish():
 
 
 def simulateAquarium():
+    '''Simulates movements inside the aquarium by 1 step'''
+    global FISHES, BUBBLERS, BUBBLES, KELP, STEP
 
-    global FISHES, BUBBLERS, BUBBLES, KELPS, STEP
-
+    #Simulates fish movement by 1 step
     for fish in FISHES:
+        #Move the fish horizontally
         if STEP % fish['hSpeed'] == 0:
             if fish['goingRight']:
                 if fish['x'] != RIGHT_EDGE:
@@ -121,11 +130,13 @@ def simulateAquarium():
                     fish['goingRight'] = True
                     fish['colors'].reverse()
 
+        #Fish can randomly change the direction horizontally
         fish['timeToHDirChange'] -= 1
         if fish['timeToHDirChange'] == 0:
             fish['timeToHDirChange'] = random.randint(10, 60)
             fish['goingRight'] = not fish['goingRight']
 
+        #Move the fish vertically
         if STEP % fish['vSpeed'] == 0:
             if fish['goingDown']:
                 if fish['y'] != BOTTOM_EDGE:
@@ -138,15 +149,18 @@ def simulateAquarium():
                 else:
                     fish['goingDown'] == True
 
+        #Fish can randomly change the direction vertically
         fish['timeToVDirChange'] -= 1
         if fish['timeToVDirChange'] == 0:
             fish['timeToVDirChange'] = random.randint(2, 20)
             fish['goingDown'] = not fish['goingDown']
 
+    #Generate bubbles from bubblers
     for bubbler in BUBBLERS:
         if random.randint(1, 5) == 1:
             BUBBLES.append({'x': bubbler, 'y': HEIGHT - 2})
 
+    #Move the bubbles
     for bubble in BUBBLES:
         diceRoll = random.randint(1, 6)
         if (diceRoll == 1) and (bubble['x'] != LEFT_EDGE):
@@ -156,12 +170,15 @@ def simulateAquarium():
 
         bubble['y'] -= 1
 
+    #Iterate through BUBBLES backwards to delete bubbles that reach the top edge
     for i in range(len(BUBBLES) -1, -1, -1):
         if BUBBLES[i]['y'] == TOP_EDGE:
             del BUBBLES[i]
 
+    #Simulate kelps by 1 step
     for kelp in KELPS:
         for i, kelpSegment in enumerate(kelp['segments']):
+            #1/20 chance that the kelp will be weaving
             if random.randint(1, 20) == 1:
                 if kelpSegment == '(':
                     kelp['segments'][i] = ')'
@@ -170,17 +187,21 @@ def simulateAquarium():
 
 
 def drawAquarium():
-    global FISHES, BUBBLERS, BUBBLES, KELPS, STEP
+    '''Draws an aquarium on the screen'''
+    global FISHES, BUBBLERS, BUBBLES, KELP, STEP
 
+    #Draws basic info on the screen
     bext.fg('white')
     bext.goto(0, 0)
     print('Aquarium         Ctrl+C: leave', end='')
 
+    #Draws bubbles
     bext.fg('white')
     for bubble in BUBBLES:
         bext.goto(bubble['x'], bubble['y'])
         print(random.choice(('o', '0')), end='')
 
+    #Draws fishes
     for fish in FISHES:
         bext.goto(fish['x'], fish['y'])
         if fish['goingRight']:
@@ -192,41 +213,49 @@ def drawAquarium():
             bext.fg(fish['colors'][i])
             print(fishPart, end='')
 
+    #Draws kelps
     bext.fg('green')
     for kelp in KELPS:
         for i, kelpSegment in enumerate(kelp['segments']):
             if kelpSegment == '(':
-                bext.goto(kelp['x'], BOTTOM_EDGE -1)
+                bext.goto(kelp['x'], BOTTOM_EDGE -i)
             elif kelpSegment == ')':
-                bext.goto(kelp['x'] +1, BOTTOM_EDGE -1)
+                bext.goto(kelp['x'] +1, BOTTOM_EDGE -i)
             print(kelpSegment, end='')
 
+    #Draws the sand on the bottom of the screen
     bext.fg('yellow')
     bext.goto(0, HEIGHT -1)
     print(chr(9617) * (WIDTH - 1), end='')
 
+    #Required by bext
     sys.stdout.flush()
 
 
 def clearAquarium():
-    global FISHES, BUBBLERS, BUBBLES, KELPS
+    '''Draws blank fields on everything that is on the screen'''
+    global FISHES, BUBBLERS, BUBBLES, KELP
 
+    #Bubbles
     for bubble in BUBBLES:
         bext.goto(bubble['x'], bubble['y'])
         print(' ', end='')
 
+    #Fishes
     for fish in FISHES:
         bext.goto(fish['x'], fish['y'])
         print(' ' * len(fish['left'][0]), end='')
 
+    #Kelps
     for kelp in KELPS:
         for i, kelpSegment in enumerate(kelp['segments']):
             bext.goto(kelp['x'], HEIGHT - 2 - i)
             print('  ', end='')
 
+    #Required by bext
     sys.stdout.flush()
 
-
+#If the program has not been imported only run, just start
 if __name__ == '__main__':
     try:
         main()
